@@ -3,7 +3,10 @@ from django.shortcuts import render, redirect
 
 
 # Create your views here.
-# 学生信息列表处理函数
+# 任务信息列表处理函数
+from sims.utils import capture_scroll_screenshot
+
+
 def index(request):
     student_no = request.GET.get('student_no', '')
     student_name = request.GET.get('student_name', '')
@@ -23,7 +26,7 @@ def index(request):
                                                   'student_name':student_name,'student_no':student_no})
 
 
-# 学生信息新增处理函数
+# 任务信息新增处理函数
 def add(request):
     if request.method == 'GET':
         return render(request, 'student/add.html')
@@ -36,10 +39,15 @@ def add(request):
             cursor.execute("INSERT INTO sims_student (student_no,student_name) "
                            "values (%s,%s)", [student_no, student_name])
             conn.commit()
+
+            capture_scroll_screenshot(
+            'http://172.20.10.5:3000/d/xfpJB9FGz/node-exporter-dashboard-en-20201010-starsl-cn?orgId=1&from=now-30m&to=now&refresh=15s',
+            '/Users/huangdan/Downloads/scrolling_screenshot缩放.png')
+
         return redirect('../')
 
 
-# 学生信息修改处理函数
+# 任务信息修改处理函数
 def edit(request):
     if request.method == 'GET':
         id = request.GET.get("id")
@@ -60,7 +68,7 @@ def edit(request):
         return redirect('../')
 
 
-# 学生信息删除处理函数
+# 任务信息删除处理函数
 def delete(request):
     id = request.GET.get("id")
     conn = MySQLdb.connect(host="172.20.10.5", user="root", passwd="rootroot", db="sms", charset='utf8mb4')
