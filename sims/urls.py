@@ -1,11 +1,10 @@
-# coding=utf-8
-
-from django.conf.urls import url
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    url(r'^$', views.index),
-    url(r'^add/$', views.add),
-    url(r'^edit/$', views.edit),
-    url(r'^delete/$', views.delete)
+    path('', views.index, name='index'),
+    path('add/', views.add, name='add'),
+    path('edit/', views.edit, name='edit'),
+    path('delete/', views.delete, name='delete'),
+    path('parse_targets/', views.parse_targets, name='parse_targets'),  # 新增
 ]

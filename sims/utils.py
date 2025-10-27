@@ -168,18 +168,23 @@ def extract_prometheus_with_regex(yaml_content):
     虚拟机尾号5
     ['172.20.10.5:8100', '172.20.10.6:8100', '172.20.10.7:8100']
     """
-    # 提取job_name
-    job_match = re.search(r'job_name:\s*"([^"]+)"', yaml_content)
-    job_name = job_match.group(1) if job_match else None
+    try:
+        # 提取job_name
+        job_match = re.search(r'job_name:\s*"([^"]+)"', yaml_content)
+        job_name = job_match.group(1) if job_match else "unknown_job"
 
-    # 提取targets
-    targets_match = re.search(r'targets:\s*\[([^\]]+)\]', yaml_content)
-    if targets_match:
-        targets = [t.strip(' "\'') for t in targets_match.group(1).split(',')]
-    else:
+        # 提取targets - 支持多组static_configs
         targets = []
+        targets_blocks = re.finditer(r'static_configs:\s*(?:-?\s*targets:\s*\[([^\]]+)\])', yaml_content)
 
-    return job_name, targets
+        for match in targets_blocks:
+            targets.extend([t.strip(' "\'') for t in match.group(1).split(',')])
+
+        return job_name, targets
+
+    except Exception as e:
+        print(f"YAML解析错误: {e}")
+        return "error_job", []
 
 
 # 将包含节点地址的列表拼接成URL查询参数字符串

@@ -1,5 +1,7 @@
 import MySQLdb
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
+import re
 
 # Create your views here.
 # 任务信息列表处理函数
@@ -78,3 +80,25 @@ def delete(request):
         cursor.execute("DELETE FROM sims_student WHERE id =%s", [id])
         conn.commit()
     return redirect('../')
+
+
+
+
+def parse_targets(request):
+    if request.method == 'POST':
+        yaml_content = request.POST.get('yaml_content', '')
+
+        try:
+            # 使用正则表达式提取targets
+            targets_match = re.search(r'targets:\s*\[([^\]]+)\]', yaml_content)
+            if targets_match:
+                targets = [t.strip(' "\'') for t in targets_match.group(1).split(',')]
+                return JsonResponse({'targets': targets})
+            else:
+                return JsonResponse({'error': '未找到targets配置'})
+        except Exception as e:
+            return JsonResponse({'error': f'解析失败: {str(e)}'})
+
+    return JsonResponse({'error': '无效请求'})
+
+# 确保在urls.py中添加对应的路由
