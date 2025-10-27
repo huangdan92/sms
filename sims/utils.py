@@ -12,7 +12,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 
-def capture_scroll_screenshot(prometheusyml_node, save_path, start_time, end_time):
+def capture_scroll_screenshot(job_name, targets, save_path, start_time, end_time):
     service = Service(r'/Users/huangdan/Downloads/work/googleDriver/chromedriver')
     chrome_options = Options()
     # chrome_options.add_argument('--headless')
@@ -21,9 +21,7 @@ def capture_scroll_screenshot(prometheusyml_node, save_path, start_time, end_tim
     driver.maximize_window()
 
     try:
-        job_name, targets = extract_prometheus_with_regex(prometheusyml_node)
-        # print('job_name=' + job_name)
-        # print('targets' + targets)
+
         start_time_timestamp13 = datetime_to_timestamp13(start_time)
         end_time_timestamp13 = datetime_to_timestamp13(end_time)
         print('start_time' + start_time)

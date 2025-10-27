@@ -5,7 +5,7 @@ import re
 
 # Create your views here.
 # 任务信息列表处理函数
-from sims.utils import capture_scroll_screenshot
+from sims.utils import capture_scroll_screenshot, extract_prometheus_with_regex
 
 
 def index(request):
@@ -35,17 +35,26 @@ def add(request):
         student_no = request.POST.get('student_no', '')
         student_name = request.POST.get('student_name', '')
         prometheusyml_node = request.POST.get('prometheusyml_node', '')
+        selected_targets = request.POST.getlist('selected_targets', [])
+        selected_targets_str = ','.join(selected_targets) if selected_targets else ''
+        print(str(type(selected_targets)))
+        # print('selected_targets=' + selected_targets)
+        print('selected_targets_str=' + selected_targets_str)
         # print(student_name)
         # print(student_no)
         # print(prometheusyml_node)
+        job_name, targets = extract_prometheus_with_regex(prometheusyml_node)
 
         conn = MySQLdb.connect(host="172.20.10.5", user="root", passwd="rootroot", db="sms", charset='utf8mb4')
         with conn.cursor(cursorclass=MySQLdb.cursors.DictCursor) as cursor:
-            cursor.execute("INSERT INTO sims_student (student_no,student_name,prometheusyml_node) "
-                           "values (%s,%s,%s)", [student_no, student_name, prometheusyml_node])
+            cursor.execute("INSERT INTO sims_student (student_no,student_name,job_name,selected_targets_str) "
+                           "values (%s,%s,%s,%s)", [student_no, student_name, job_name, selected_targets_str])
             conn.commit()
 
-            capture_scroll_screenshot(prometheusyml_node, '/Users/huangdan/Downloads/scrolling_screenshot缩放.png',
+
+
+            capture_scroll_screenshot(job_name, selected_targets,
+                                      '/Users/huangdan/Downloads/scrolling_screenshot缩放.png',
                                       student_name, student_no)
 
         return redirect('../')
@@ -80,8 +89,6 @@ def delete(request):
         cursor.execute("DELETE FROM sims_student WHERE id =%s", [id])
         conn.commit()
     return redirect('../')
-
-
 
 
 def parse_targets(request):

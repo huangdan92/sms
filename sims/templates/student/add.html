@@ -21,34 +21,45 @@
             margin: 5px 0;
             padding: 5px;
             background: #f5f5f5;
+            display: flex;
+            align-items: center;
+        }
+        .target-item input {
+            margin-right: 10px;
+        }
+        .hidden-input {
+            display: none;
         }
     </style>
 </head>
 <body>
-<form method="post" action="../add/">
+<form method="post" action="../add/" id="main-form">
     {% csrf_token %}
     <table>
         <tr>
             <th>开始时间</th>
-            <td><input name="student_name"></td>
+            <td><input name="student_name" required></td>
         </tr>
         <tr>
             <th>结束时间</th>
-            <td><input name="student_no"/></td>
+            <td><input name="student_no" required/></td>
         </tr>
         <tr>
             <th>prometheus.yml配置</th>
             <td>
-                <textarea name="prometheusyml_node" rows="5" style="width:100%"></textarea>
+                <textarea name="prometheusyml_node" rows="5" style="width:100%" required></textarea>
                 <button type="button" id="parse-btn" style="margin-top:5px">解析Targets</button>
                 <div class="targets-container" id="targets-container">
                     <!-- 解析后的targets将显示在这里 -->
+                </div>
+                <div id="selected-targets-container" class="hidden-input">
+                    <!-- 隐藏的输入框用于存储选中的targets -->
                 </div>
             </td>
         </tr>
         <tr>
             <td colspan="2">
-                <input type="submit"/>
+                <input type="submit" value="提交"/>
             </td>
         </tr>
     </table>
@@ -74,7 +85,9 @@ document.getElementById('parse-btn').addEventListener('click', function() {
     .then(response => response.json())
     .then(data => {
         const container = document.getElementById('targets-container');
+        const selectedContainer = document.getElementById('selected-targets-container');
         container.innerHTML = '';
+        selectedContainer.innerHTML = '';
 
         if (data.error) {
             container.innerHTML = `<div style="color:red">${data.error}</div>`;
@@ -85,9 +98,53 @@ document.getElementById('parse-btn').addEventListener('click', function() {
             data.targets.forEach(target => {
                 const div = document.createElement('div');
                 div.className = 'target-item';
-                div.textContent = target;
+
+                // 添加复选框
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = target;
+                checkbox.name = 'target_checkbox';
+                checkbox.checked = true; // 默认选中
+
+                // 添加隐藏的input用于表单提交
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'selected_targets';
+                hiddenInput.value = target;
+
+                div.appendChild(checkbox);
+                div.appendChild(document.createTextNode(target));
                 container.appendChild(div);
+                selectedContainer.appendChild(hiddenInput);
             });
+
+            // 添加全选/取消全选按钮
+            const selectAllDiv = document.createElement('div');
+            selectAllDiv.style.margin = '10px 0';
+
+            const selectAllBtn = document.createElement('button');
+            selectAllBtn.type = 'button';
+            selectAllBtn.textContent = '全选';
+            selectAllBtn.onclick = function() {
+                document.querySelectorAll('input[name="target_checkbox"]').forEach(cb => {
+                    cb.checked = true;
+                    cb.dispatchEvent(new Event('change'));
+                });
+            };
+
+            const deselectAllBtn = document.createElement('button');
+            deselectAllBtn.type = 'button';
+            deselectAllBtn.textContent = '取消全选';
+            deselectAllBtn.onclick = function() {
+                document.querySelectorAll('input[name="target_checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                    cb.dispatchEvent(new Event('change'));
+                });
+            };
+
+            selectAllDiv.appendChild(selectAllBtn);
+            selectAllDiv.appendChild(deselectAllBtn);
+            container.insertBefore(selectAllDiv, container.firstChild);
         } else {
             container.innerHTML = '<div>未找到有效的targets</div>';
         }
@@ -95,6 +152,36 @@ document.getElementById('parse-btn').addEventListener('click', function() {
     .catch(error => {
         console.error('Error:', error);
     });
+});
+
+// 监听复选框变化，更新隐藏的input
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'target_checkbox') {
+        const targetValue = e.target.value;
+        const hiddenInputs = document.querySelectorAll('input[name="selected_targets"]');
+        const existingInput = Array.from(hiddenInputs).find(input => input.value === targetValue);
+
+        if (e.target.checked && !existingInput) {
+            // 添加隐藏input
+            const newInput = document.createElement('input');
+            newInput.type = 'hidden';
+            newInput.name = 'selected_targets';
+            newInput.value = targetValue;
+            document.getElementById('selected-targets-container').appendChild(newInput);
+        } else if (!e.target.checked && existingInput) {
+            // 移除隐藏input
+            existingInput.remove();
+        }
+    }
+});
+
+// 表单提交前验证
+document.getElementById('main-form').addEventListener('submit', function(e) {
+    const selectedTargets = document.querySelectorAll('input[name="selected_targets"]');
+    if (selectedTargets.length === 0) {
+        alert('请至少选择一个target');
+        e.preventDefault();
+    }
 });
 </script>
 </body>
