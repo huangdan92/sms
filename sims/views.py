@@ -32,18 +32,19 @@ def add(request):
     else:
         student_no = request.POST.get('student_no', '')
         student_name = request.POST.get('student_name', '')
-        print(student_name)
-        print(student_no)
+        prometheusyml_node = request.POST.get('prometheusyml_node', '')
+        # print(student_name)
+        # print(student_no)
+        # print(prometheusyml_node)
 
         conn = MySQLdb.connect(host="172.20.10.5", user="root", passwd="rootroot", db="sms", charset='utf8mb4')
         with conn.cursor(cursorclass=MySQLdb.cursors.DictCursor) as cursor:
-            cursor.execute("INSERT INTO sims_student (student_no,student_name) "
-                           "values (%s,%s)", [student_no, student_name])
+            cursor.execute("INSERT INTO sims_student (student_no,student_name,prometheusyml_node) "
+                           "values (%s,%s,%s)", [student_no, student_name, prometheusyml_node])
             conn.commit()
 
-            capture_scroll_screenshot(
-                'http://172.20.10.5:3000/d/xfpJB9FGz/node-exporter-dashboard-en-20201010-starsl-cn?orgId=1&from=1761532554000&to=1761532602000&var-origin_prometheus=&var-job=%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%B0%BE%E5%8F%B75&var-hostname=All&var-node=172.20.10.5:8100&var-device=All&var-interval=2m&var-maxmount=%2F&var-show_hostname=localhost.localdomain&var-total=1',
-                '/Users/huangdan/Downloads/scrolling_screenshot缩放.png', student_name, student_no)
+            capture_scroll_screenshot(prometheusyml_node, '/Users/huangdan/Downloads/scrolling_screenshot缩放.png',
+                                      student_name, student_no)
 
         return redirect('../')
 
