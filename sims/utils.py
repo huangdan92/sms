@@ -5,12 +5,13 @@ from selenium.webdriver.chrome.service import Service
 import time
 import os
 import datetime
+import yaml
 from urllib.parse import quote
 
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-def capture_scroll_screenshot(url, save_path, start_time, end_time):
+def capture_scroll_screenshot(prometheusyml_node, save_path, start_time, end_time):
     service = Service(r'/Users/huangdan/Downloads/work/googleDriver/chromedriver')
     chrome_options = Options()
     # chrome_options.add_argument('--headless')
@@ -139,3 +140,44 @@ def chinese_to_url_encoded(text):
     """
     encoded_text = quote(text)
     return encoded_text
+
+
+# 从 Prometheus YAML 配置内容中提取 job_name 和对应的 targets
+def extract_prometheus_targets(yaml_content):
+    """
+    入参:
+    - job_name: "虚拟机尾号5"
+    static_configs:
+    - targets: ["172.20.10.5:8100","172.20.10.6:8100","172.20.10.7:8100"]
+    返回:
+    虚拟机尾号5
+    ['172.20.10.5:8100', '172.20.10.6:8100', '172.20.10.7:8100']
+    """
+    try:
+        config_data = yaml.safe_load(yaml_content)
+        if isinstance(config_data, list):
+            scrape_configs = config_data
+        elif isinstance(config_data, dict):
+            scrape_configs = config_data.get('scrape_configs', [])
+        else:
+            print("错误：不支持的YAML格式")
+            return None, []
+
+        if scrape_configs:
+            job_config = scrape_configs[0]
+            job_name = job_config.get('job_name')
+
+            targets = []
+            static_configs_list = job_config.get('static_configs', [])
+
+            if static_configs_list:
+                for static_config in static_configs_list:
+                    targets.extend(static_config.get('targets', []))
+
+            return job_name, targets
+        else:
+            return None, []
+
+    except yaml.YAMLError as e:
+        print(f"YAML 解析错误: {e}")
+        return None, []
