@@ -8,7 +8,7 @@ import os
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-def capture_scroll_screenshot(url, save_path):
+def capture_scroll_screenshot(url, save_path, start_time, end_time):
     service = Service(r'/Users/huangdan/Downloads/work/googleDriver/chromedriver')
     chrome_options = Options()
     # chrome_options.add_argument('--headless')
@@ -29,10 +29,10 @@ def capture_scroll_screenshot(url, save_path):
         button_last30minites.click()
         text_from = driver.find_element(By.XPATH, "//*[@id='TimePickerContent']/div[1]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/input")
         text_from.clear()
-        text_from.send_keys("2025-10-17 00:00:00")
+        text_from.send_keys(start_time)
         text_to = driver.find_element(By.XPATH, "//*[@id='TimePickerContent']/div[1]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div/div[1]/input")
         text_to.clear()
-        text_to.send_keys("2025-10-17 23:00:00")
+        text_to.send_keys(end_time)
         button_applytimerange = driver.find_element(By.XPATH, "//*[@id='TimePickerContent']/div[1]/div[2]/div[1]/div[2]/button")
         button_applytimerange.click()
         time.sleep(3)
