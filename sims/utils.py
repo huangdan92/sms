@@ -4,6 +4,8 @@ from io import BytesIO
 from selenium.webdriver.chrome.service import Service
 import time
 import os
+import datetime
+from urllib.parse import quote
 
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -110,3 +112,30 @@ def capture_scroll_screenshot(url, save_path, start_time, end_time):
 
     finally:
         driver.quit()
+
+
+
+# 获取秒级时间戳并转换为毫秒级（13位）
+def datetime_to_timestamp13(datetime_str):
+    """
+    入参:
+    2025-10-24 19:55:44
+    返回:
+    1761306944000
+    """
+    dt_object = datetime.datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
+    timestamp_13 = int(dt_object.timestamp() * 1000)
+    return timestamp_13
+
+
+
+# 将包含中文的字符串转换为URL编码格式
+def chinese_to_url_encoded(text):
+    """
+    入参:
+    渤e短网址平台信创改造UAT服务器
+    返回:
+    %E6%B8%A4e%E7%9F%AD%E7%BD%91%E5%9D%80%E5%B9%B3%E5%8F%B0%E4%BF%A1%E5%88%9B%E6%94%B9%E9%80%A0UAT%E6%9C%8D%E5%8A%A1%E5%99%A8
+    """
+    encoded_text = quote(text)
+    return encoded_text
