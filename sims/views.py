@@ -11,12 +11,24 @@ from sims.utils import capture_scroll_screenshot, extract_prometheus_with_regex,
 def index(request):
     student_no = request.GET.get('student_no', '')
     student_name = request.GET.get('student_name', '')
+    job_name = request.GET.get('job_name', '')
+    selected_targets_str = request.GET.get('selected_targets_str', '')
+    custom_config_content = request.GET.get('custom_config_content', '')
+    custom_selected_targets_str = request.GET.get('custom_selected_targets_str', '')
 
-    sql = "SELECT id,student_no,student_name FROM sims_student WHERE 1=1 "
+    sql = "SELECT id,student_no,student_name,job_name,selected_targets_str,custom_config_content,custom_selected_targets_str FROM sims_student WHERE 1=1 "
     if student_no.strip() != '':
         sql = sql + " and student_no = '" + student_no + "'"
     if student_name.strip() != '':
         sql = sql + " and student_name = '" + student_name + "'"
+    if job_name.strip() != '':
+        sql = sql + " and job_name = '" + job_name + "'"
+    if selected_targets_str.strip() != '':
+        sql = sql + " and selected_targets_str = '" + selected_targets_str + "'"
+    if custom_config_content.strip() != '':
+        sql = sql + " and custom_config_content = '" + custom_config_content + "'"
+    if custom_selected_targets_str.strip() != '':
+        sql = sql + " and custom_selected_targets_str = '" + custom_selected_targets_str + "'"
 
     print(sql)
     conn = MySQLdb.connect(host="172.20.10.5", user="root", passwd="rootroot", db="sms", charset='utf8mb4')
@@ -24,7 +36,10 @@ def index(request):
         cursor.execute(sql)
         students = cursor.fetchall()
     return render(request, 'student/index.html', {'students': students,
-                                                  'student_name': student_name, 'student_no': student_no})
+                                                  'student_name': student_name, 'student_no': student_no,
+                                                  'job_name': job_name, 'selected_targets_str': selected_targets_str,
+                                                  'custom_config_content': custom_config_content,
+                                                  'custom_selected_targets_str': custom_selected_targets_str})
 
 
 # 任务信息新增处理函数
