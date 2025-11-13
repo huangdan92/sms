@@ -10,6 +10,7 @@
             border: 1px solid #ccc;
             padding: 20px
         }
+
         .targets-container {
             margin-top: 15px;
             border: 1px solid #eee;
@@ -17,6 +18,7 @@
             max-height: 200px;
             overflow-y: auto;
         }
+
         .target-item {
             margin: 5px 0;
             padding: 5px;
@@ -24,9 +26,11 @@
             display: flex;
             align-items: center;
         }
+
         .target-item input {
             margin-right: 10px;
         }
+
         .hidden-input {
             display: none;
         }
@@ -45,15 +49,32 @@
             <td><input name="student_no" required/></td>
         </tr>
         <tr>
-            <th>prometheus.yml配置</th>
+            <th>ECS的prometheus.yml配置</th>
             <td>
-                <textarea name="prometheusyml_node" rows="5" style="width:100%" required></textarea>
+                <textarea name="prometheusyml_node" rows="5" style="width:100%" placeholder='  - job_name: "X系统服务器资源"
+    static_configs:
+    - targets: ["172.20.10.5:8100","172.20.10.6:8100","172.20.10.7:8100"]'></textarea>
                 <button type="button" id="parse-btn" style="margin-top:5px">解析Targets</button>
                 <div class="targets-container" id="targets-container">
                     <!-- 解析后的targets将显示在这里 -->
                 </div>
                 <div id="selected-targets-container" class="hidden-input">
                     <!-- 隐藏的输入框用于存储选中的targets -->
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th>JVM的prometheus.yml配置	</th>
+            <td>
+                <textarea name="custom_config" rows="5" style="width:100%" placeholder='  - job_name: "X系统JVM"
+    static_configs:
+    - targets: ["172.20.10.5:8101","172.20.10.6:8101","172.20.10.7:8101"]'></textarea>
+                <button type="button" id="parse-custom-btn" style="margin-top:5px">解析Targets</button>
+                <div class="targets-container" id="custom-targets-container">
+                    <!-- 解析后的自定义targets将显示在这里 -->
+                </div>
+                <div id="custom-selected-targets-container" class="hidden-input">
+                    <!-- 隐藏的输入框用于存储选中的自定义targets -->
                 </div>
             </td>
         </tr>
@@ -66,123 +87,232 @@
 </form>
 
 <script>
-document.getElementById('parse-btn').addEventListener('click', function() {
-    const yamlContent = document.getElementsByName('prometheusyml_node')[0].value;
-    if (!yamlContent.trim()) {
-        alert('请输入prometheus.yml配置内容');
-        return;
-    }
-
-    // 发送AJAX请求到后端解析
-    fetch('/sims/parse_targets/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: 'yaml_content=' + encodeURIComponent(yamlContent)
-    })
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('targets-container');
-        const selectedContainer = document.getElementById('selected-targets-container');
-        container.innerHTML = '';
-        selectedContainer.innerHTML = '';
-
-        if (data.error) {
-            container.innerHTML = `<div style="color:red">${data.error}</div>`;
+    document.getElementById('parse-btn').addEventListener('click', function () {
+        const yamlContent = document.getElementsByName('prometheusyml_node')[0].value;
+        if (!yamlContent.trim()) {
+            alert('请输入prometheus.yml配置内容');
             return;
         }
 
-        if (data.targets && data.targets.length > 0) {
-            data.targets.forEach(target => {
-                const div = document.createElement('div');
-                div.className = 'target-item';
+        // 发送AJAX请求到后端解析
+        fetch('/sims/parse_targets/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: 'yaml_content=' + encodeURIComponent(yamlContent)
+        })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('targets-container');
+                const selectedContainer = document.getElementById('selected-targets-container');
+                container.innerHTML = '';
+                selectedContainer.innerHTML = '';
 
-                // 添加复选框
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = target;
-                checkbox.name = 'target_checkbox';
-                checkbox.checked = true; // 默认选中
+                if (data.error) {
+                    container.innerHTML = `<div style="color:red">${data.error}</div>`;
+                    return;
+                }
 
-                // 添加隐藏的input用于表单提交
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'selected_targets';
-                hiddenInput.value = target;
+                if (data.targets && data.targets.length > 0) {
+                    data.targets.forEach(target => {
+                        const div = document.createElement('div');
+                        div.className = 'target-item';
 
-                div.appendChild(checkbox);
-                div.appendChild(document.createTextNode(target));
-                container.appendChild(div);
-                selectedContainer.appendChild(hiddenInput);
+                        // 添加复选框
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = target;
+                        checkbox.name = 'target_checkbox';
+                        checkbox.checked = true; // 默认选中
+
+                        // 添加隐藏的input用于表单提交
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'selected_targets';
+                        hiddenInput.value = target;
+
+                        div.appendChild(checkbox);
+                        div.appendChild(document.createTextNode(target));
+                        container.appendChild(div);
+                        selectedContainer.appendChild(hiddenInput);
+                    });
+
+                    // 添加全选/取消全选按钮
+                    const selectAllDiv = document.createElement('div');
+                    selectAllDiv.style.margin = '10px 0';
+
+                    const selectAllBtn = document.createElement('button');
+                    selectAllBtn.type = 'button';
+                    selectAllBtn.textContent = '全选';
+                    selectAllBtn.onclick = function () {
+                        document.querySelectorAll('input[name="target_checkbox"]').forEach(cb => {
+                            cb.checked = true;
+                            cb.dispatchEvent(new Event('change'));
+                        });
+                    };
+
+                    const deselectAllBtn = document.createElement('button');
+                    deselectAllBtn.type = 'button';
+                    deselectAllBtn.textContent = '取消全选';
+                    deselectAllBtn.onclick = function () {
+                        document.querySelectorAll('input[name="target_checkbox"]').forEach(cb => {
+                            cb.checked = false;
+                            cb.dispatchEvent(new Event('change'));
+                        });
+                    };
+
+                    selectAllDiv.appendChild(selectAllBtn);
+                    selectAllDiv.appendChild(deselectAllBtn);
+                    container.insertBefore(selectAllDiv, container.firstChild);
+                } else {
+                    container.innerHTML = '<div>未找到有效的targets</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
-
-            // 添加全选/取消全选按钮
-            const selectAllDiv = document.createElement('div');
-            selectAllDiv.style.margin = '10px 0';
-
-            const selectAllBtn = document.createElement('button');
-            selectAllBtn.type = 'button';
-            selectAllBtn.textContent = '全选';
-            selectAllBtn.onclick = function() {
-                document.querySelectorAll('input[name="target_checkbox"]').forEach(cb => {
-                    cb.checked = true;
-                    cb.dispatchEvent(new Event('change'));
-                });
-            };
-
-            const deselectAllBtn = document.createElement('button');
-            deselectAllBtn.type = 'button';
-            deselectAllBtn.textContent = '取消全选';
-            deselectAllBtn.onclick = function() {
-                document.querySelectorAll('input[name="target_checkbox"]').forEach(cb => {
-                    cb.checked = false;
-                    cb.dispatchEvent(new Event('change'));
-                });
-            };
-
-            selectAllDiv.appendChild(selectAllBtn);
-            selectAllDiv.appendChild(deselectAllBtn);
-            container.insertBefore(selectAllDiv, container.firstChild);
-        } else {
-            container.innerHTML = '<div>未找到有效的targets</div>';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
     });
-});
 
-// 监听复选框变化，更新隐藏的input
-document.addEventListener('change', function(e) {
-    if (e.target.name === 'target_checkbox') {
-        const targetValue = e.target.value;
-        const hiddenInputs = document.querySelectorAll('input[name="selected_targets"]');
-        const existingInput = Array.from(hiddenInputs).find(input => input.value === targetValue);
+    // 监听复选框变化，更新隐藏的input
+    document.addEventListener('change', function (e) {
+        if (e.target.name === 'target_checkbox') {
+            const targetValue = e.target.value;
+            const hiddenInputs = document.querySelectorAll('input[name="selected_targets"]');
+            const existingInput = Array.from(hiddenInputs).find(input => input.value === targetValue);
 
-        if (e.target.checked && !existingInput) {
-            // 添加隐藏input
-            const newInput = document.createElement('input');
-            newInput.type = 'hidden';
-            newInput.name = 'selected_targets';
-            newInput.value = targetValue;
-            document.getElementById('selected-targets-container').appendChild(newInput);
-        } else if (!e.target.checked && existingInput) {
-            // 移除隐藏input
-            existingInput.remove();
+            if (e.target.checked && !existingInput) {
+                // 添加隐藏input
+                const newInput = document.createElement('input');
+                newInput.type = 'hidden';
+                newInput.name = 'selected_targets';
+                newInput.value = targetValue;
+                document.getElementById('selected-targets-container').appendChild(newInput);
+            } else if (!e.target.checked && existingInput) {
+                // 移除隐藏input
+                existingInput.remove();
+            }
         }
-    }
-});
+    });
 
-// 表单提交前验证
-document.getElementById('main-form').addEventListener('submit', function(e) {
-    const selectedTargets = document.querySelectorAll('input[name="selected_targets"]');
-    if (selectedTargets.length === 0) {
-        alert('请至少选择一个target');
-        e.preventDefault();
-    }
-});
+
+    // 新增：自定义配置解析功能JVM
+    document.getElementById('parse-custom-btn').addEventListener('click', function () {
+        const customContent = document.getElementsByName('custom_config')[0].value;
+        if (!customContent.trim()) {
+            alert('请输入自定义配置内容');
+            return;
+        }
+
+        // 发送AJAX请求到后端解析自定义配置
+        fetch('/sims/parse_targets/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: 'yaml_content=' + encodeURIComponent(customContent)
+        })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('custom-targets-container');
+                const selectedContainer = document.getElementById('custom-selected-targets-container');
+                container.innerHTML = '';
+                selectedContainer.innerHTML = '';
+
+                if (data.error) {
+                    container.innerHTML = `<div style="color:red">${data.error}</div>`;
+                    return;
+                }
+
+                if (data.targets && data.targets.length > 0) {
+                    data.targets.forEach(target => {
+                        const div = document.createElement('div');
+                        div.className = 'target-item';
+
+                        // 添加复选框
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = target;
+                        checkbox.name = 'custom_target_checkbox';
+                        checkbox.checked = true;
+
+                        // 添加隐藏的input用于表单提交
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'custom_selected_targets';
+                        hiddenInput.value = target;
+
+                        div.appendChild(checkbox);
+                        div.appendChild(document.createTextNode(target));
+                        container.appendChild(div);
+                        selectedContainer.appendChild(hiddenInput);
+                    });
+
+                    // 添加全选/取消全选按钮
+                    const selectAllDiv = document.createElement('div');
+                    selectAllDiv.style.margin = '10px 0';
+
+                    const selectAllBtn = document.createElement('button');
+                    selectAllBtn.type = 'button';
+                    selectAllBtn.textContent = '全选';
+                    selectAllBtn.onclick = function () {
+                        container.querySelectorAll('input[name="custom_target_checkbox"]').forEach(cb => {
+                            cb.checked = true;
+                            cb.dispatchEvent(new Event('change'));
+                        });
+                    };
+
+                    const deselectAllBtn = document.createElement('button');
+                    deselectAllBtn.type = 'button';
+                    deselectAllBtn.textContent = '取消全选';
+                    deselectAllBtn.onclick = function () {
+                        container.querySelectorAll('input[name="custom_target_checkbox"]').forEach(cb => {
+                            cb.checked = false;
+                            cb.dispatchEvent(new Event('change'));
+                        });
+                    };
+
+                    selectAllDiv.appendChild(selectAllBtn);
+                    selectAllDiv.appendChild(deselectAllBtn);
+                    container.insertBefore(selectAllDiv, container.firstChild);
+                } else {
+                    container.innerHTML = '<div>未找到有效的targets</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+
+    // 监听自定义配置复选框变化
+    document.addEventListener('change', function (e) {
+        if (e.target.name === 'custom_target_checkbox') {
+            const targetValue = e.target.value;
+            const hiddenInputs = document.querySelectorAll('input[name="custom_selected_targets"]');
+            const existingInput = Array.from(hiddenInputs).find(input => input.value === targetValue);
+
+            if (e.target.checked && !existingInput) {
+                const newInput = document.createElement('input');
+                newInput.type = 'hidden';
+                newInput.name = 'custom_selected_targets';
+                newInput.value = targetValue;
+                document.getElementById('custom-selected-targets-container').appendChild(newInput);
+            } else if (!e.target.checked && existingInput) {
+                existingInput.remove();
+            }
+        }
+    });
+
+    // 表单提交前验证
+    document.getElementById('main-form').addEventListener('submit', function (e) {
+        const selectedTargets = document.querySelectorAll('input[name="selected_targets"]');
+        if (selectedTargets.length === 0) {
+            alert('请至少选择一个target');
+            e.preventDefault();
+        }
+    });
 </script>
 </body>
 </html>

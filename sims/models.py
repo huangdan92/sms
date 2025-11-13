@@ -7,3 +7,5 @@ class Student(models.Model):
     student_name = models.CharField(max_length=32)
     job_name = models.CharField(max_length=5000, null=True, blank=True)
     selected_targets_str = models.CharField(max_length=5000, null=True, blank=True)
+    custom_config_content = models.TextField(null=True, blank=True)
+    custom_selected_targets_str = models.CharField(max_length=5000, null=True, blank=True)
