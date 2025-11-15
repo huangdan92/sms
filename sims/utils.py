@@ -50,15 +50,26 @@ def capture_scroll_screenshot(job_name, targets, save_path, start_time, end_time
         save_dir = r"/Users/huangdan/Downloads/work"
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        full_page_path = os.path.join(save_dir, "ecs_resourece_full_page1.png")
-        cropped_region_path = os.path.join(save_dir, "ecs_resourece_cropped_region1.png")
-        driver.save_screenshot(full_page_path)
+        full_page_path1 = os.path.join(save_dir, job_name + "_" + build_query_string_nodes_picture(
+            targets) + "_full_page1.png")
+        cropped_region_path1 = os.path.join(save_dir, job_name + "_" + build_query_string_nodes_picture(
+            targets) + "_1.png")
+        driver.save_screenshot(full_page_path1)
         x1, y1 = 120, 115
         x2, y2 = 2765, 1320
-        im = Image.open(full_page_path)
+        im = Image.open(full_page_path1)
         region = im.crop((x1, y1, x2, y2))
-        region.save(cropped_region_path)
-        print(f"指定区域截图已保存至：{cropped_region_path}")
+        region.save(cropped_region_path1)
+        print(f"指定区域截图已保存至：{cropped_region_path1}")
+        try:
+            os.remove(full_page_path1)
+            print(f"文件 {full_page_path1} 已成功删除。")
+        except FileNotFoundError:
+            print(f"错误：文件 {full_page_path1} 不存在。")
+        except PermissionError:
+            print(f"错误：没有权限删除文件 {full_page_path1}。")
+        except Exception as e:
+            print(f"删除文件时发生未知错误：{e}")
 
         button_cpubasic = driver.find_element(By.XPATH,
                                               "//*[@id='reactRoot']/div/main/div[3]/div/div/div[1]/div/div/div[1]/div/div/div[22]/div/div[1]/header/div/h2")
@@ -68,15 +79,26 @@ def capture_scroll_screenshot(job_name, targets, save_path, start_time, end_time
         save_dir = r"/Users/huangdan/Downloads/work"
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        full_page_path = os.path.join(save_dir, "ecs_resourece_full_page2.png")
-        cropped_region_path = os.path.join(save_dir, "ecs_resourece_cropped_region2.png")
-        driver.save_screenshot(full_page_path)
+        full_page_path2 = os.path.join(save_dir, job_name + "_" + build_query_string_nodes_picture(
+            targets) + "_full_page2.png")
+        cropped_region_path2 = os.path.join(save_dir, job_name + "_" + build_query_string_nodes_picture(
+            targets) + "_2.png")
+        driver.save_screenshot(full_page_path2)
         x1, y1 = 120, 182
         x2, y2 = 2767, 1480
-        im = Image.open(full_page_path)
+        im = Image.open(full_page_path2)
         region = im.crop((x1, y1, x2, y2))
-        region.save(cropped_region_path)
-        print(f"指定区域截图已保存至：{cropped_region_path}")
+        region.save(cropped_region_path2)
+        print(f"指定区域截图已保存至：{cropped_region_path2}")
+        try:
+            os.remove(full_page_path2)
+            print(f"文件 {full_page_path2} 已成功删除。")
+        except FileNotFoundError:
+            print(f"错误：文件 {full_page_path2} 不存在。")
+        except PermissionError:
+            print(f"错误：没有权限删除文件 {full_page_path2}。")
+        except Exception as e:
+            print(f"删除文件时发生未知错误：{e}")
 
     finally:
         driver.quit()
@@ -121,7 +143,7 @@ def capture_scroll_screenshot_jvm(job_name, target, start_time, end_time):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         full_page_path = os.path.join(save_dir, job_name + "_" + target + "_full_page.png")
-        cropped_region_path = os.path.join(save_dir, job_name + "_" + target + "_cropped_region.png")
+        cropped_region_path = os.path.join(save_dir, job_name + "_" + target + ".png")
         driver.save_screenshot(full_page_path)
         x1, y1 = 120, 115
         x2, y2 = 2765, 1240
@@ -129,6 +151,15 @@ def capture_scroll_screenshot_jvm(job_name, target, start_time, end_time):
         region = im.crop((x1, y1, x2, y2))
         region.save(cropped_region_path)
         print(f"指定区域截图已保存至：{cropped_region_path}")
+        try:
+            os.remove(full_page_path)
+            print(f"文件 {full_page_path} 已成功删除。")
+        except FileNotFoundError:
+            print(f"错误：文件 {full_page_path} 不存在。")
+        except PermissionError:
+            print(f"错误：没有权限删除文件 {full_page_path}。")
+        except Exception as e:
+            print(f"删除文件时发生未知错误：{e}")
 
 
     finally:
@@ -202,3 +233,17 @@ def build_query_string_nodes(targets_list):
         return ""
     query_string = '&var-node='.join(targets_list)
     return '&var-node=' + query_string
+
+
+# 将包含节点地址的列表拼接成图片命名的字符串
+def build_query_string_nodes_picture(targets_list):
+    """
+    入参:
+    ['172.30.36.148:8100', '172.30.36.149:8100', '172.30.52.148:8100', '172.30.52.149:8100']
+    返回:
+    &var-node=172.30.36.148:8100&var-node=172.30.36.149:8100&var-node=172.30.52.148:8100&var-node=172.30.52.149:8100
+    """
+    if not targets_list:
+        return ""
+    query_string = '_'.join(targets_list)
+    return '' + query_string
