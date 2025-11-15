@@ -7,8 +7,8 @@
 <body>
 
 <form action="../sims" style="margin: 10px 0">
-    <input name="student_name" placeholder="请输入开始时间" value="{{ student_name }}" style="margin-right: 10px"/>
-    <input name="student_no" placeholder="请输入结束时间" value="{{ student_no }}" style="margin-right: 10px"/>
+    <input name="job_name" placeholder="请输入ECS_job_name" value="{{ job_name }}" style="margin-right: 10px"/>
+    <input name="custom_config_content" placeholder="请输入JVM_job_name" value="{{ custom_config_content }}" style="margin-right: 10px"/>
     <button type="submit">查询</button>
 </form>
 <table border="1px" width="100%" style="border-collapse: collapse;">
@@ -21,7 +21,7 @@
         <th>ECS_targets</th>
         <th>JVM_job_name</th>
         <th>JVM_targets</th>
-        <th>操作</th>
+{#        <th>操作</th>#}
     </tr>
     {% for student in students %}
         <tr>
@@ -32,14 +32,14 @@
             <td align="center">{{ student.selected_targets_str }} </td>
             <td align="center">{{ student.custom_config_content }} </td>
             <td align="center">{{ student.custom_selected_targets_str }} </td>
-            <td align="center">
-                <a href="../sims/edit/?id={{ student.id }}">
-                    编辑
-                </a>
-                <a href="../sims/delete/?id={{ student.id }}">
-                    删除
-                </a>
-            </td>
+{#            <td align="center">#}
+{#                <a href="../sims/edit/?id={{ student.id }}">#}
+{#                    编辑#}
+{#                </a>#}
+{#                <a href="../sims/delete/?id={{ student.id }}">#}
+{#                    删除#}
+{#                </a>#}
+{#            </td>#}
         </tr>
     {% endfor %}
 </table>
