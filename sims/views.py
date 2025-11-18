@@ -72,7 +72,11 @@ def add(request):
         # print(student_no)
         # print(prometheusyml_node)
         job_name, targets = extract_prometheus_with_regex(prometheusyml_node)
+        if not selected_targets:
+            job_name = ''
         job_name_jvm, targets_jvm = extract_prometheus_with_regex(custom_config)
+        if not custom_selected_targets:
+            job_name_jvm = ''
         print(job_name)
         print(job_name_jvm)
 
@@ -86,7 +90,6 @@ def add(request):
                 print(target_each)
                 capture_scroll_screenshot_jvm(job_name_jvm, target_each, student_name, student_no)
 
-
         conn = MySQLdb.connect(host="172.20.10.5", user="root", passwd="rootroot", db="sms", charset='utf8mb4')
         with conn.cursor(cursorclass=MySQLdb.cursors.DictCursor) as cursor:
             cursor.execute(
@@ -94,7 +97,6 @@ def add(request):
                 "values (%s,%s,%s,%s,%s,%s)",
                 [student_no, student_name, job_name, selected_targets_str, job_name_jvm, custom_selected_targets_str])
             conn.commit()
-
 
         return redirect('../')
 
